@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-    <h3>✍️ Поставте ваш підпис екрані:</h3>
+    <h3>✍️ Поставте ваш підпис на екрані:</h3>
     
     <div class="canvas-container">
         <canvas id="sig-canvas" width="320" height="200"></canvas>
@@ -35,7 +35,7 @@
         let ctx = canvas.getContext("2d");
         ctx.lineWidth = 4;
         ctx.lineCap = "round";
-        ctx.strokeStyle = "#000080"; 
+        ctx.strokeStyle = "#000000"; // Змінили на чорний (краще стискається)
         
         let drawing = false;
         
@@ -61,26 +61,34 @@
         
         document.getElementById("save").addEventListener("click", () => {
             let tempCanvas = document.createElement("canvas");
-            tempCanvas.width = 100; // Зробили ще меншим для гарантії
-            tempCanvas.height = 60;
             let tCtx = tempCanvas.getContext("2d");
-            
-            // Білий фон замість прозорого (щоб код важив ще менше)
-            tCtx.fillStyle = "#ffffff";
-            tCtx.fillRect(0, 0, 100, 60);
-            tCtx.drawImage(canvas, 0, 0, 100, 60);
-            
-            let dataUrl = tempCanvas.toDataURL("image/jpeg", 0.5); // Використовуємо стиснений JPEG
-            
-            // Перевіряємо розмір перед відправкою
+
+            // Функція для отримання картинки з потрібним масштабом
+            function getCompressed(scale) {
+                tempCanvas.width = canvas.width * scale;
+                tempCanvas.height = canvas.height * scale;
+                tCtx.fillStyle = "#ffffff"; 
+                tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                return tempCanvas.toDataURL("image/jpeg", 0.8);
+            }
+
+            // РОЗУМНЕ СТИСНЕННЯ
+            let scale = 1.0; // Починаємо з 100% якості
+            let dataUrl = getCompressed(scale);
+
+            // Якщо не влазить в ліміт Телеграму, плавно зменшуємо масштаб
+            while (dataUrl.length > 4000 && scale > 0.3) {
+                scale -= 0.1;
+                dataUrl = getCompressed(scale);
+            }
+
             if (dataUrl.length > 4000) {
-                alert("❌ Підпис занадто складний (" + dataUrl.length + " байт). Ліміт: 4000. Спробуйте простіше!");
+                alert("❌ Підпис занадто складний. Спробуйте простіше!");
             } else {
                 tg.sendData(dataUrl); 
             }
         });
     </script>
-</body>
-</html>
 </body>
 </html>
