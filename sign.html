@@ -35,12 +35,11 @@
         let ctx = canvas.getContext("2d");
         ctx.lineWidth = 4;
         ctx.lineCap = "round";
-        ctx.strokeStyle = "#000080";
+        ctx.strokeStyle = "#000080"; // Синя ручка
         
         let drawing = false;
         let hasDrawing = false;
         
-        // Змінні для відстеження меж (щоб обрізати білий фон)
         let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
 
         function updateBounds(x, y) {
@@ -83,7 +82,6 @@
                 return;
             }
 
-            // Додаємо маленькі рамки (відступи) по 10 пікселів
             let pad = 10;
             let cMinX = Math.max(0, minX - pad);
             let cMinY = Math.max(0, minY - pad);
@@ -92,27 +90,35 @@
             let cropW = cMaxX - cMinX;
             let cropH = cMaxY - cMinY;
 
-            // Створюємо нове полотно ІДЕАЛЬНО по розміру підпису
+            // СЕКРЕТНИЙ ТРЮК: Жорстко обмежуємо фізичний розмір (ширину не більше 160px)
+            let maxW = 160; 
+            let scale = Math.min(1.0, maxW / cropW);
+            let finalW = cropW * scale;
+            let finalH = cropH * scale;
+
             let tempCanvas = document.createElement("canvas");
-            tempCanvas.width = cropW;
-            tempCanvas.height = cropH;
+            tempCanvas.width = finalW;
+            tempCanvas.height = finalH;
             let tCtx = tempCanvas.getContext("2d");
+            
+            // Білий фон + формат JPEG гарантують найменшу можливу вагу
             tCtx.fillStyle = "#ffffff"; 
-            tCtx.fillRect(0, 0, cropW, cropH);
-            // Копіюємо ТІЛЬКИ сам малюнок без зайвого фону
-            tCtx.drawImage(canvas, cMinX, cMinY, cropW, cropH, 0, 0, cropW, cropH);
+            tCtx.fillRect(0, 0, finalW, finalH);
+            tCtx.drawImage(canvas, cMinX, cMinY, cropW, cropH, 0, 0, finalW, finalH);
 
-            // Тепер стискаємо його (завдяки обрізці якість буде 100%)
-            let quality = 1.0;
-            let dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            // Конвертуємо у JPEG із середньою якістю (60%)
+            let dataUrl = tempCanvas.toDataURL("image/jpeg", 0.6);
 
-            while (dataUrl.length > 4000 && quality > 0.3) {
-                quality -= 0.1;
-                dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            // Якщо якимось дивом все ще > 4000 байт, б'ємо по якості ще раз (до 30%)
+            if (dataUrl.length > 4000) {
+                dataUrl = tempCanvas.toDataURL("image/jpeg", 0.3);
             }
 
-            // Відправляємо боту
-            tg.sendData(dataUrl); 
+            if (dataUrl.length > 4000) {
+                alert("❌ Підпис все ще занадто складний. Спробуйте простіше.");
+            } else {
+                tg.sendData(dataUrl); 
+            }
         });
     </script>
 </body>
