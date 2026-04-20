@@ -29,13 +29,13 @@
 
     <script>
         let tg = window.Telegram.WebApp;
-        tg.expand(); // Розгортаємо на весь екран
+        tg.expand();
         
         let canvas = document.getElementById("sig-canvas");
         let ctx = canvas.getContext("2d");
         ctx.lineWidth = 4;
         ctx.lineCap = "round";
-        ctx.strokeStyle = "#000080"; // Темно-синій колір ручки
+        ctx.strokeStyle = "#000080"; 
         
         let drawing = false;
         
@@ -46,13 +46,11 @@
             return { x: clientX - rect.left, y: clientY - rect.top };
         }
         
-        // Мишка
         canvas.addEventListener("mousedown", (e) => { drawing = true; let pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); });
         canvas.addEventListener("mousemove", (e) => { if(drawing) { let pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); } });
         canvas.addEventListener("mouseup", () => drawing = false);
         canvas.addEventListener("mouseleave", () => drawing = false);
         
-        // Сенсор (Палець)
         canvas.addEventListener("touchstart", (e) => { drawing = true; let pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); e.preventDefault(); }, {passive: false});
         canvas.addEventListener("touchmove", (e) => { if(drawing) { let pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); } e.preventDefault(); }, {passive: false});
         canvas.addEventListener("touchend", () => drawing = false);
@@ -62,9 +60,18 @@
         });
         
         document.getElementById("save").addEventListener("click", () => {
-            // Перетворюємо малюнок на Base64 код картинки з прозорим фоном
-            let dataUrl = canvas.toDataURL("image/png");
-            // Відправляємо цей код назад боту
+            // ТРЮК ДЛЯ ОБХОДУ ЛІМІТУ TELEGRAM (4096 байт)
+            // Створюємо невидиме міні-полотно
+            let tempCanvas = document.createElement("canvas");
+            tempCanvas.width = 120; // Зменшуємо розмір
+            tempCanvas.height = 75;
+            let tCtx = tempCanvas.getContext("2d");
+            
+            // Копіюємо туди наш малюнок
+            tCtx.drawImage(canvas, 0, 0, 120, 75);
+            
+            // Тепер Base64 буде гарантовано менше 4 КБ!
+            let dataUrl = tempCanvas.toDataURL("image/png");
             tg.sendData(dataUrl); 
         });
     </script>
