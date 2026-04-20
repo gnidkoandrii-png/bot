@@ -60,20 +60,27 @@
         });
         
         document.getElementById("save").addEventListener("click", () => {
-            // ТРЮК ДЛЯ ОБХОДУ ЛІМІТУ TELEGRAM (4096 байт)
-            // Створюємо невидиме міні-полотно
             let tempCanvas = document.createElement("canvas");
-            tempCanvas.width = 120; // Зменшуємо розмір
-            tempCanvas.height = 75;
+            tempCanvas.width = 100; // Зробили ще меншим для гарантії
+            tempCanvas.height = 60;
             let tCtx = tempCanvas.getContext("2d");
             
-            // Копіюємо туди наш малюнок
-            tCtx.drawImage(canvas, 0, 0, 120, 75);
+            // Білий фон замість прозорого (щоб код важив ще менше)
+            tCtx.fillStyle = "#ffffff";
+            tCtx.fillRect(0, 0, 100, 60);
+            tCtx.drawImage(canvas, 0, 0, 100, 60);
             
-            // Тепер Base64 буде гарантовано менше 4 КБ!
-            let dataUrl = tempCanvas.toDataURL("image/png");
-            tg.sendData(dataUrl); 
+            let dataUrl = tempCanvas.toDataURL("image/jpeg", 0.5); // Використовуємо стиснений JPEG
+            
+            // Перевіряємо розмір перед відправкою
+            if (dataUrl.length > 4000) {
+                alert("❌ Підпис занадто складний (" + dataUrl.length + " байт). Ліміт: 4000. Спробуйте простіше!");
+            } else {
+                tg.sendData(dataUrl); 
+            }
         });
     </script>
+</body>
+</html>
 </body>
 </html>
