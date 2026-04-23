@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Greentech Scanner</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background: #000; 
+            color: white; 
+            font-family: sans-serif; 
+        }
+        .loader { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <h3>Завантаження камери...</h3>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Функція для запуску сканера
+        function startScan() {
+            tg.showScanQrPopup({
+                text: "Наведіть камеру на штрих-код (Greentech)"
+            }, function(text) {
+                // Як тільки код зчитано:
+                tg.sendData(text); // Відправляємо дані боту
+                tg.closeScanQrPopup(); // Закриваємо вікно сканера
+                tg.close(); // Закриваємо WebApp
+                return true; 
+            });
+        }
+
+        // Запускаємо відразу при відкритті сторінки
+        window.onload = startScan;
+
+        // Якщо користувач закрив сканер кнопкою "Закрити", закриваємо і весь WebApp
+        tg.onEvent('scanQrPopupClosed', function() {
+            tg.close();
+        });
+    </script>
+</body>
+</html>
